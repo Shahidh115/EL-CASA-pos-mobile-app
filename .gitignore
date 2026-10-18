@@ -1,0 +1,55 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+dist
+dist-ssr
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Android outputs
+android/.gradle
+android/build
+android/app/build
+android/app/src/main/assets/public
+android/.idea
+android/*.iml
+android/app/*.iml
+android/local.properties
+android/captures
+.externalNativeBuild
+.cxx
+
+# SQLite database local files
+*.sqlite
+*.sqlite3
+*.db
+
+# Backups
+*.backup
+*.dump
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.jks
+*.keystore
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

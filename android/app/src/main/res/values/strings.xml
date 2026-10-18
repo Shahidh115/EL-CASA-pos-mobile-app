@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">EL CASA POS</string>
+    <string name="title_activity_main">EL CASA POS</string>
+    <string name="package_name">com.elcasa.roms.pos</string>
+    <string name="custom_url_scheme">com.elcasa.roms.pos</string>
+</resources>
