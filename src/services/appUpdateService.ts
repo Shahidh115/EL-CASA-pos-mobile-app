@@ -81,8 +81,8 @@ class AppUpdateService {
     // Web fallback
     return {
       packageName: 'com.elcasa.roms.pos',
-      versionName: '1.0.0',
-      versionCode: 1,
+      versionName: '1.1',
+      versionCode: 4,
     }
   }
 

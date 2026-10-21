@@ -24,8 +24,8 @@ import { UpdateModal } from './UpdateModal'
 export function AppUpdateCard() {
   const [appInfo, setAppInfo] = useState<AppInfo>({
     packageName: 'com.elcasa.roms.pos',
-    versionName: '1.0.0',
-    versionCode: 1,
+    versionName: '1.1',
+    versionCode: 4,
   })
   const [updateUrl, setUpdateUrl] = useState<string>(DEFAULT_UPDATE_URL)
   const [isChecking, setIsChecking] = useState<boolean>(false)

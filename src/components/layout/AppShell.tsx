@@ -107,7 +107,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <Database className="size-3.5" />
           <span>Local SQLite Storage</span>
         </div>
-        <div>v1.0.0 Standalone Android POS</div>
+        <div>v1.1 Standalone Android POS</div>
       </div>
     </div>
   )

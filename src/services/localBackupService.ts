@@ -1,6 +1,10 @@
 import { db } from '@/db/database'
 import { todayISO } from '@/lib/utils'
 import type { BackupPayload } from '@/types'
+import { Capacitor } from '@capacitor/core'
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
+import { Share } from '@capacitor/share'
+
 
 export class LocalBackupService {
   public async exportBackup(): Promise<string> {
@@ -38,6 +42,53 @@ export class LocalBackupService {
     }
 
     return JSON.stringify(payload, null, 2)
+  }
+
+
+  public async exportAndShareBackup(): Promise<{ filename: string; uri?: string }> {
+    const jsonString = await this.exportBackup()
+    const now = new Date()
+    const dateStr = now.toISOString().slice(0, 10)
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
+    const filename = `elcasa-pos-backup-${dateStr}-${timeStr}.json`
+
+    if (Capacitor.isNativePlatform()) {
+      // Write file to app cache directory (mapped via FileProvider cache-path)
+      const fileResult = await Filesystem.writeFile({
+        path: filename,
+        data: jsonString,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      })
+
+      // Open native system Share sheet / Chooser dialog
+      try {
+        await Share.share({
+          title: filename,
+          text: `EL CASA POS database backup (${dateStr})`,
+          dialogTitle: 'Share Database Backup',
+          files: [fileResult.uri],
+        })
+      } catch (shareErr: any) {
+        const msg = String(shareErr?.message || shareErr || '')
+        if (msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('dismiss')) {
+          return { filename, uri: fileResult.uri }
+        }
+        throw shareErr
+      }
+
+      return { filename, uri: fileResult.uri }
+    } else {
+      // Browser fallback: trigger blob download
+      const blob = new Blob([jsonString], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(url)
+      return { filename }
+    }
   }
 
   public async importBackup(jsonString: string): Promise<{ success: boolean; message: string }> {

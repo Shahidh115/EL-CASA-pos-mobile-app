@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Settings as SettingsIcon, Save, Download, Upload, RotateCcw, ShieldCheck, Database } from 'lucide-react'
+import { Settings as SettingsIcon, Save, Download, Upload, RotateCcw, ShieldCheck, Database, Share2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, unwrap } from '@/lib/api'
 import { useSettings } from '@/hooks/useData'
@@ -66,20 +66,18 @@ export default function SettingsPage() {
     onError: (e: any) => toast.error(e.message),
   })
 
-  // Export JSON Backup
+  const [isExporting, setIsExporting] = useState(false)
+
+  // Export JSON Backup and open native share popup
   const handleExportBackup = async () => {
     try {
-      const json = await localBackupService.exportBackup()
-      const blob = new Blob([json], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `elcasa-roms-backup-${new Date().toISOString().slice(0, 10)}.json`
-      a.click()
-      URL.revokeObjectURL(url)
-      toast.success('Backup file exported successfully')
+      setIsExporting(true)
+      const res = await localBackupService.exportAndShareBackup()
+      toast.success(`Backup file created: ${res.filename}`)
     } catch (e: any) {
-      toast.error('Export failed: ' + e.message)
+      toast.error('Export failed: ' + (e?.message || e))
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -99,6 +97,8 @@ export default function SettingsPage() {
         }
       } catch (err: any) {
         toast.error('Restore failed: ' + err.message)
+      } finally {
+        e.target.value = ''
       }
     }
     reader.readAsText(file)
@@ -282,13 +282,19 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            All business data is stored locally in SQLite on your Android device. Export encrypted or JSON backups
-            to safeguard against hardware loss or transfer to another device.
+            All business data is stored locally in SQLite on your Android device. Export a complete JSON backup and share it via WhatsApp, Google Drive, email, or save it to your device storage.
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={handleExportBackup} className="gap-2">
-              <Download className="size-4" /> Export Backup (.JSON)
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleExportBackup}
+              disabled={isExporting}
+              className="gap-2 font-medium"
+            >
+              {isExporting ? <Loader2 className="size-4 animate-spin" /> : <Share2 className="size-4" />}
+              {isExporting ? 'Exporting...' : 'Export & Share Backup (.JSON)'}
             </Button>
 
             <label className="cursor-pointer">

@@ -1,9 +1,9 @@
 {
-  "versionName": "1.0.2",
-  "versionCode": 3,
-  "apkUrl": "https://github.com/Shahidh115/EL-CASA-pos-mobile-app/releases/download/v1.0.2/app-debug.apk",
-  "changelog": "• Shop logo printed on bills & receipts (with live preview & toggle)\n• Mobile App launcher icon updated to sleek POS logo\n• Official GitHub update URL configured as permanent default\n• Native Android PrintManager spooler & ESC/POS raster print support",
+  "versionName": "1.1",
+  "versionCode": 4,
+  "apkUrl": "https://github.com/Shahidh115/EL-CASA-pos-mobile-app/releases/download/v1.1/app-debug.apk",
+  "changelog": "• Database export now writes JSON backup file and opens native system share popup\n• Direct export & share to WhatsApp, Drive, Gmail, or local storage\n• App version updated to 1.1",
   "releaseDate": "2026-10-21",
   "forceUpdate": false,
-  "fileSizeMb": 29.8
+  "fileSizeMb": 30
 }
