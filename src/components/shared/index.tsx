@@ -24,3 +24,5 @@ export function EmptyState({ title, description }: { title: string; description?
 }
 
 export { Button } from '@/components/ui/button'
+export { UpdateModal } from './UpdateModal'
+export { AppUpdateCard } from './AppUpdateCard'

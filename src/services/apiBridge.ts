@@ -1,3 +1,4 @@
+import { todayISO } from '@/lib/utils'
 import { localCategoryService } from './localCategoryService'
 import { localMenuItemService } from './localMenuItemService'
 import { localRecipeService } from './localRecipeService'
@@ -23,7 +24,11 @@ export async function handleLocalApi(method: string, path: string, data?: any, p
     const sub = parts[1]
     const p = params || data || {}
     if (sub === 'summary') return localReportService.salesSummary(p.from, p.to)
-    if (sub === 'food-sales') return localReportService.foodSales(p.from, p.to)
+    if (sub === 'food-sales' || sub === 'today-sales' || sub === 'product-sales') {
+      const from = p.from || p.date || todayISO()
+      const to = p.to || p.date || from
+      return localReportService.productSales(from, to)
+    }
     if (sub === 'resource-usage') return localReportService.resourceUsage(p.from, p.to)
     if (sub === 'waste') return localReportService.wasteReport(p.from, p.to)
     if (sub === 'hourly') return localReportService.hourlySales(p.date)

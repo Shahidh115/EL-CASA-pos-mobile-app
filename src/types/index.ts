@@ -216,3 +216,13 @@ export interface BackupPayload {
   wastes: any[]
   settings: any[]
 }
+
+export interface ProductSaleItem {
+  menu_item_id: number
+  name: string
+  category: string
+  price: number
+  quantity: number
+  revenue: number
+  orders_count: number
+}

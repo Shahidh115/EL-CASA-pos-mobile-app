@@ -1,0 +1,9 @@
+﻿{
+  "versionName": "1.0.1",
+  "versionCode": 2,
+  "apkUrl": "https://github.com/shahidh115/elcasa-roms-android/releases/download/v1.0.1/app-release.apk",
+  "changelog": "• Added Today's Sales breakdown tab\n• Upgraded to Black + Blue Minimalist theme\n• Enhanced receipt printing with accurate local time\n• Seamless in-app APK auto-updater with SQLite protection",
+  "releaseDate": "2026-10-21",
+  "forceUpdate": false,
+  "fileSizeMb": 30.0
+}

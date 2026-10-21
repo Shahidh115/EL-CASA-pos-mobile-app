@@ -21,6 +21,7 @@ class DatabaseManager {
   private isNative = false
   private initialized = false
   private initPromise: Promise<void> | null = null
+  private inTransaction = false
   private readonly storageKey = 'elcasa_roms_sqlite_bin'
 
   private constructor() {}
@@ -157,7 +158,7 @@ class DatabaseManager {
     await this.init()
 
     if (this.isNative && this.nativeDb) {
-      const res = await this.nativeDb.run(sql, params)
+      const res = await this.nativeDb.run(sql, params, !this.inTransaction)
       return {
         changes: res.changes?.changes,
         lastId: res.changes?.lastId,
@@ -182,7 +183,7 @@ class DatabaseManager {
     await this.init()
 
     if (this.isNative && this.nativeDb) {
-      await this.nativeDb.execute(statements)
+      await this.nativeDb.execute(statements, !this.inTransaction)
       return
     }
 
@@ -197,14 +198,29 @@ class DatabaseManager {
 
   public async transaction<T>(callback: (db: DatabaseManager) => Promise<T>): Promise<T> {
     await this.init()
-    await this.run('BEGIN TRANSACTION;')
-    try {
-      const result = await callback(this)
-      await this.run('COMMIT;')
-      return result
-    } catch (error) {
-      await this.run('ROLLBACK;')
-      throw error
+    if (this.isNative && this.nativeDb) {
+      await this.nativeDb.beginTransaction()
+      this.inTransaction = true
+      try {
+        const result = await callback(this)
+        await this.nativeDb.commitTransaction()
+        this.inTransaction = false
+        return result
+      } catch (error) {
+        await this.nativeDb.rollbackTransaction()
+        this.inTransaction = false
+        throw error
+      }
+    } else {
+      await this.run('BEGIN TRANSACTION;')
+      try {
+        const result = await callback(this)
+        await this.run('COMMIT;')
+        return result
+      } catch (error) {
+        await this.run('ROLLBACK;')
+        throw error
+      }
     }
   }
 

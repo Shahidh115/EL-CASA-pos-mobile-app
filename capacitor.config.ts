@@ -1,9 +1,12 @@
-import type { CapacitorConfig } from '@capacitor/cli'
+﻿import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.elcasa.roms.pos',
   appName: 'EL CASA POS',
   webDir: 'dist',
+  android: {
+    adjustMarginsForEdgeToEdge: 'force'
+  },
   plugins: {
     CapacitorSQLite: {
       iosDatabaseLocation: 'Library/CapacitorDatabase',

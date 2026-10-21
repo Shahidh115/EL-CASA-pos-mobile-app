@@ -66,13 +66,13 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
           <div className="flex items-center gap-1.5 bg-muted p-1 rounded-lg">
             <button
               onClick={() => setPrinterConfig({ paperWidth: '58mm' })}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${printerConfig.paperWidth === '58mm' ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground'}`}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${printerConfig.paperWidth === '58mm' ? 'bg-[#00447c] text-white shadow-xs font-bold' : 'text-muted-foreground'}`}
             >
               58mm
             </button>
             <button
               onClick={() => setPrinterConfig({ paperWidth: '80mm' })}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${printerConfig.paperWidth === '80mm' ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground'}`}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${printerConfig.paperWidth === '80mm' ? 'bg-[#00447c] text-white shadow-xs font-bold' : 'text-muted-foreground'}`}
             >
               80mm
             </button>
@@ -80,7 +80,7 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
         </DialogHeader>
 
         {/* Paper Receipt Simulation */}
-        <div className="flex-1 overflow-y-auto p-4 rounded-xl bg-amber-50 dark:bg-zinc-900 border font-mono text-xs text-zinc-800 dark:text-zinc-200 shadow-inner whitespace-pre leading-relaxed select-text">
+        <div className="flex-1 overflow-y-auto p-4 rounded-xl bg-[#dddace] border border-[#c6c3b6] font-mono text-xs text-[#0c0c0c] shadow-sm shadow-inner whitespace-pre leading-relaxed select-text">
           {textPreview}
         </div>
 

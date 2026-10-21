@@ -1,6 +1,6 @@
 import { EscPosEncoder } from './escpos'
 import type { Bill, PrinterConfig, SettingsData } from '@/types'
-import { formatMoney, formatDateTime } from '@/lib/utils'
+import { formatMoney, formatDateTime, formatDate, formatTime, todayISO } from '@/lib/utils'
 
 export class PrinterService {
   public formatReceiptText(bill: Bill, settings: SettingsData, paperWidth: '58mm' | '80mm' = '80mm'): string {
@@ -28,8 +28,11 @@ export class PrinterService {
     lines.push(eq)
     lines.push(twoCol('INVOICE #:', bill.invoice_number))
     if (bill.customer_phone) lines.push(twoCol('CUSTOMER:', bill.customer_phone))
-    const dateStr = bill.bill_date ? `${bill.bill_date} (${formatDateTime(bill.created_at)})` : formatDateTime(bill.created_at)
-    lines.push(twoCol('DATE:', dateStr))
+    const receiptTime = bill.completed_at || bill.created_at
+    const dateDisplay = bill.bill_date || formatDate(receiptTime)
+    const timeDisplay = formatTime(receiptTime)
+    lines.push(twoCol('DATE:', dateDisplay))
+    if (timeDisplay) lines.push(twoCol('TIME:', timeDisplay))
     lines.push(eq)
 
     if (paperWidth === '58mm') {
@@ -83,8 +86,11 @@ export class PrinterService {
     encoder.align('left')
     encoder.table2Cols('INVOICE #:', bill.invoice_number, cols)
     if (bill.customer_phone) encoder.table2Cols('CUSTOMER:', bill.customer_phone, cols)
-    const dateStr = bill.bill_date ? `${bill.bill_date} (${formatDateTime(bill.created_at)})` : formatDateTime(bill.created_at)
-    encoder.table2Cols('DATE:', dateStr, cols)
+    const receiptTime = bill.completed_at || bill.created_at
+    const dateDisplay = bill.bill_date || formatDate(receiptTime)
+    const timeDisplay = formatTime(receiptTime)
+    encoder.table2Cols('DATE:', dateDisplay, cols)
+    if (timeDisplay) encoder.table2Cols('TIME:', timeDisplay, cols)
     encoder.hr('=', cols)
 
     for (const item of bill.items) {
@@ -169,11 +175,135 @@ export class PrinterService {
     console.log('Fired cash drawer kick pulse ESC p 0 25 250')
   }
 
+
+  public formatProductSalesReportText(date: string, items: any[], settings: SettingsData, paperWidth: '58mm' | '80mm' = '80mm'): string {
+    const cols = paperWidth === '58mm' ? 32 : 48
+    const hr = '-'.repeat(cols)
+    const eq = '='.repeat(cols)
+    const currency = settings.currency || 'Rs.'
+
+    const lines: string[] = []
+    const center = (text: string) => {
+      const pad = Math.max(0, Math.floor((cols - text.length) / 2))
+      return ' '.repeat(pad) + text
+    }
+
+    const twoCol = (left: string, right: string) => {
+      const space = Math.max(1, cols - (left.length + right.length))
+      return left + ' '.repeat(space) + right
+    }
+
+    if (settings.restaurant_name) lines.push(center(settings.restaurant_name.toUpperCase()))
+    lines.push(center('TODAY PRODUCT SALES REPORT'))
+    lines.push(center(`DATE: ${date}`))
+    lines.push(eq)
+
+    const totalQty = items.reduce((s, i) => s + Number(i.quantity || 0), 0)
+    const totalRev = items.reduce((s, i) => s + Number(i.revenue || 0), 0)
+
+    lines.push(twoCol('PRODUCT', 'QTY       TOTAL'))
+    lines.push(hr)
+    for (const item of items) {
+      lines.push(item.name)
+      const qtyStr = `x ${item.quantity}`
+      const revStr = formatMoney(item.revenue, currency)
+      lines.push(twoCol(`  ${qtyStr}`, revStr))
+    }
+
+    lines.push(eq)
+    lines.push(twoCol('TOTAL ITEMS SOLD:', String(totalQty)))
+    lines.push(twoCol('TOTAL REVENUE:', formatMoney(totalRev, currency)))
+    lines.push(eq)
+    lines.push(center(`Printed: ${formatTime(new Date(), true)}`))
+
+    return lines.join('\n')
+  }
+
+  public encodeProductSalesReportEscPos(date: string, items: any[], settings: SettingsData, config: PrinterConfig): Uint8Array {
+    const cols = config.paperWidth === '58mm' ? 32 : 48
+    const encoder = new EscPosEncoder().reset()
+    const currency = settings.currency || 'Rs.'
+
+    encoder.align('center')
+    if (settings.restaurant_name) {
+      encoder.bold(true).doubleSize(true).line(settings.restaurant_name).doubleSize(false).bold(false)
+    }
+    encoder.bold(true).line('TODAY PRODUCT SALES REPORT').bold(false)
+    encoder.line(`DATE: ${date}`)
+    encoder.hr('=', cols)
+
+    encoder.align('left')
+    encoder.table2Cols('PRODUCT', 'QTY       TOTAL', cols)
+    encoder.hr('-', cols)
+
+    let totalQty = 0
+    let totalRev = 0
+    for (const item of items) {
+      totalQty += Number(item.quantity) || 0
+      totalRev += Number(item.revenue) || 0
+      encoder.bold(true).line(item.name).bold(false)
+      const qtyStr = `x ${item.quantity}`
+      const revStr = formatMoney(item.revenue, currency)
+      encoder.table2Cols(`  ${qtyStr}`, revStr, cols)
+    }
+
+    encoder.hr('=', cols)
+    encoder.bold(true)
+    encoder.table2Cols('TOTAL ITEMS SOLD:', String(totalQty), cols)
+    encoder.table2Cols('TOTAL REVENUE:', formatMoney(totalRev, currency), cols)
+    encoder.bold(false)
+    encoder.hr('=', cols)
+
+    encoder.align('center')
+    encoder.line(`Printed: ${formatTime(new Date(), true)}`)
+    encoder.lineFeed(2)
+
+    if (config.autoCut) {
+      encoder.cut()
+    } else {
+      encoder.lineFeed(4)
+    }
+
+    return encoder.encode()
+  }
+
+  public async printProductSalesReport(date: string, items: any[], settings: SettingsData, config: PrinterConfig): Promise<{ success: boolean; message: string }> {
+    if (config.type === 'system') {
+      window.print()
+      return { success: true, message: 'Sent report to system print spooler' }
+    }
+
+    if (config.type === 'bluetooth') {
+      try {
+        if (!(navigator as any).bluetooth) {
+          throw new Error('Web Bluetooth is not supported on this device/browser. Please use System Print.')
+        }
+        const device = await (navigator as any).bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', '49535343-fe7d-4ae5-8fa9-9fafd205e455'],
+        })
+        const server = await device.gatt?.connect()
+        if (!server) throw new Error('Bluetooth connection failed')
+
+        const bytes = this.encodeProductSalesReportEscPos(date, items, settings, config)
+        return { success: true, message: `Printed report (${bytes.length} bytes) to Bluetooth printer ${device.name || ''}` }
+      } catch (err: any) {
+        console.warn('Bluetooth print failed, falling back to system print:', err)
+        window.print()
+        return { success: true, message: 'Bluetooth unavailable, printed via System Dialog: ' + err.message }
+      }
+    }
+
+    window.print()
+    return { success: true, message: 'Sent report to print spooler' }
+  }
+
   public generateTestReceipt(): Bill {
+    const nowIso = new Date().toISOString()
     return {
       id: 9999,
       invoice_number: 'TEST-PREVIEW-0001',
-      bill_date: new Date().toISOString().slice(0, 10),
+      bill_date: todayISO(),
       status: 'completed',
       subtotal: 2400,
       discount: 200,
@@ -183,7 +313,8 @@ export class PrinterService {
       payment_type: 'cash',
       customer_phone: '0771234567',
       item_count: 2,
-      created_at: new Date().toISOString(),
+      created_at: nowIso,
+      completed_at: nowIso,
       items: [
         { id: 1, menu_item_id: 1, name: 'Chicken Fried Rice', quantity: 2, unit_price: 950, line_total: 1900 },
         { id: 2, menu_item_id: 2, name: 'Egg Roti', quantity: 2, unit_price: 250, line_total: 500 },

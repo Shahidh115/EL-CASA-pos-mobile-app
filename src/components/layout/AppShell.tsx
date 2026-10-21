@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -56,7 +56,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { data: settings } = useSettings()
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]">
       <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border">
         {settings?.logo_path ? (
           <img
@@ -73,8 +73,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <div className="text-sm font-bold text-sidebar-foreground truncate max-w-[130px]">
             {settings?.restaurant_name ?? 'EL CASA'}
           </div>
-          <div className="text-[10px] uppercase tracking-wider font-semibold text-emerald-500 flex items-center gap-1 mt-0.5">
-            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="text-[10px] uppercase tracking-wider font-semibold text-[#0b7b9e] flex items-center gap-1 mt-0.5">
+            <span className="size-1.5 rounded-full bg-[#0b7b9e] animate-pulse" />
             Offline ROMS
           </div>
         </div>
@@ -91,8 +91,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               cn(
                 'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all',
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-sidebar-muted hover:bg-white/5 hover:text-sidebar-foreground'
+                  ? 'bg-[#00447c] text-white shadow-sm font-bold'
+                  : 'text-sidebar-muted hover:bg-[#212121] hover:text-[#f2f3f4]'
               )
             }
           >
@@ -103,7 +103,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="p-4 border-t border-sidebar-border text-[11px] text-sidebar-muted space-y-1">
-        <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+        <div className="flex items-center gap-1.5 text-[#0b7b9e] font-medium">
           <Database className="size-3.5" />
           <span>Local SQLite Storage</span>
         </div>
@@ -133,7 +133,7 @@ export function AppShell() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setMobileOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-72 bg-sidebar text-sidebar-foreground shadow-2xl">
             <button
-              className="absolute top-4 right-4 size-8 rounded-full bg-white/10 text-white flex items-center justify-center"
+              className="absolute top-[calc(env(safe-area-inset-top,0px)+1rem)] right-4 size-8 rounded-full bg-white/10 text-white flex items-center justify-center z-10"
               onClick={() => setMobileOpen(false)}
             >
               <X className="size-4" />
@@ -145,7 +145,7 @@ export function AppShell() {
 
       {/* Main Content */}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background/90 px-4 backdrop-blur-md">
+        <header className="sticky top-0 z-30 flex min-h-14 items-center justify-between gap-4 border-b bg-background/90 px-4 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -161,8 +161,8 @@ export function AppShell() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-500/20">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#00447c]/15 text-[#0b7b9e] text-xs font-semibold border border-[#0b7b9e]/30">
+              <span className="size-2 rounded-full bg-[#0b7b9e] animate-pulse" />
               Offline Native POS
             </div>
             <ThemeToggle />
@@ -176,3 +176,4 @@ export function AppShell() {
     </div>
   )
 }
+

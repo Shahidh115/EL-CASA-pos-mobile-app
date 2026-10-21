@@ -1,13 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Search, Barcode, Plus, Minus, Trash2, Calendar, PauseCircle,
-  CheckCircle, ReceiptText, Camera, CreditCard, Banknote, HelpCircle, ShoppingCart
+  CheckCircle, ReceiptText, Camera, CreditCard, Banknote, HelpCircle, ShoppingCart, Clock, ShoppingBag
 } from 'lucide-react'
 import { api, unwrap } from '@/lib/api'
 import type { MenuItem, Bill } from '@/types'
-import { todayISO, cn, formatMoney } from '@/lib/utils'
+import { todayISO, formatTime, cn, formatMoney } from '@/lib/utils'
 import { usePosData, useSettings } from '@/hooks/useData'
 import { useCartStore, cartTotal } from '@/stores/useCartStore'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ import { BarcodeScannerModal } from '@/components/hardware/BarcodeScannerModal'
 import { ReceiptModal } from '@/components/hardware/ReceiptModal'
 
 export default function PosPage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: posData, isLoading } = usePosData()
   const { data: settings } = useSettings()
@@ -34,6 +36,14 @@ export default function PosPage() {
   const [discount, setDiscount] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [billDate, setBillDate] = useState(todayISO())
+  const [liveTime, setLiveTime] = useState(() => formatTime(new Date(), true))
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLiveTime(formatTime(new Date(), true))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
   const [receiptBill, setReceiptBill] = useState<Bill | null>(null)
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [activeHoldingCode, setActiveHoldingCode] = useState<string | null>(null)
@@ -230,6 +240,26 @@ export default function PosPage() {
               </button>
             )}
           </div>
+
+          {/* Real-time Clock Indicator */}
+          <div className="hidden sm:flex items-center gap-1.5 rounded-lg border bg-card px-3 py-2 text-xs shadow-xs" title="Device Local Time">
+            <Clock className="size-3.5 text-primary animate-pulse" />
+            <span className="font-semibold text-muted-foreground">Time:</span>
+            <span className="font-mono font-bold text-foreground">{liveTime}</span>
+          </div>
+
+          {/* Quick link to Today Sales Tab */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/sales?tab=today')}
+            className="h-9 px-3 gap-1.5 text-xs font-bold border bg-card hover:bg-primary/10 hover:text-primary transition-colors shadow-2xs"
+            title="View Today's Product Sales & Quantities"
+          >
+            <ShoppingBag className="size-3.5 text-primary" />
+            Today's Sales
+          </Button>
         </div>
 
         {/* Categories Bar */}

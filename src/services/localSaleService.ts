@@ -202,9 +202,10 @@ export class LocalSaleService {
   }
 
   public async discardHold(code: string): Promise<void> {
+    const nowIso = new Date().toISOString()
     await db.run(
-      'UPDATE bills SET status = "cancelled", cancelled_at = datetime("now"), note = COALESCE(note || " | ", "") || "Hold discarded" WHERE hold_code = ? AND status = "hold";',
-      [code.toUpperCase()]
+      'UPDATE bills SET status = "cancelled", cancelled_at = ?, updated_at = ?, note = COALESCE(note || " | ", "") || "Hold discarded" WHERE hold_code = ? AND status = "hold";',
+      [nowIso, nowIso, code.toUpperCase()]
     )
   }
 
@@ -244,7 +245,10 @@ export class LocalSaleService {
         }
       }
 
-      await tx.run('UPDATE bills SET status = "cancelled", cancelled_at = datetime("now"), updated_at = datetime("now") WHERE id = ?;', [
+      const nowIso = new Date().toISOString()
+      await tx.run('UPDATE bills SET status = "cancelled", cancelled_at = ?, updated_at = ? WHERE id = ?;', [
+        nowIso,
+        nowIso,
         id,
       ])
 
@@ -310,12 +314,13 @@ export class LocalSaleService {
 
     let billId = params.existingBillId
 
+    const nowIso = new Date().toISOString()
     if (billId) {
       await tx.run(
         `UPDATE bills SET
           bill_date = ?, status = ?, subtotal = ?, discount = ?,
           tax_rate = ?, tax_amount = ?, total = ?, payment_type = ?,
-          customer_phone = ?, note = ?, completed_at = datetime('now'), updated_at = datetime('now')
+          customer_phone = ?, note = ?, completed_at = ?, updated_at = ?
          WHERE id = ?;`,
         [
           params.date,
@@ -328,6 +333,8 @@ export class LocalSaleService {
           params.paymentType,
           params.customerPhone,
           params.note,
+          params.status === 'completed' ? nowIso : null,
+          nowIso,
           billId,
         ]
       )
@@ -335,8 +342,8 @@ export class LocalSaleService {
       const insertRes = await tx.run(
         `INSERT INTO bills
          (invoice_number, bill_date, status, hold_code, subtotal, discount,
-          tax_rate, tax_amount, total, payment_type, customer_phone, note, completed_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          tax_rate, tax_amount, total, payment_type, customer_phone, note, completed_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           params.invoiceNumber,
           params.date,
@@ -350,7 +357,9 @@ export class LocalSaleService {
           params.paymentType,
           params.customerPhone,
           params.note,
-          params.status === 'completed' ? new Date().toISOString() : null,
+          params.status === 'completed' ? nowIso : null,
+          nowIso,
+          nowIso,
         ]
       )
       billId = insertRes.lastId || (await tx.queryOne('SELECT last_insert_rowid() as id')).id

@@ -1,5 +1,5 @@
 import { db } from '@/db/database'
-import { todayISO } from '@/lib/utils'
+import { todayISO, parseDate } from '@/lib/utils'
 import { localResourceService } from './localResourceService'
 
 export class LocalReportService {
@@ -74,7 +74,7 @@ export class LocalReportService {
 
   public async hourlySales(date: string) {
     const rows = await db.query(
-      'SELECT created_at, total FROM bills WHERE status = "completed" AND bill_date = ?;',
+      'SELECT created_at, completed_at, total FROM bills WHERE status = "completed" AND bill_date = ?;',
       [date]
     )
 
@@ -89,11 +89,14 @@ export class LocalReportService {
     }
 
     for (const r of rows) {
-      if (r.created_at) {
-        const d = new Date(r.created_at)
-        const hour = isNaN(d.getHours()) ? 0 : d.getHours()
-        hours[hour].count += 1
-        hours[hour].revenue += Number(r.total)
+      const ts = r.completed_at || r.created_at
+      if (ts) {
+        const d = parseDate(ts)
+        if (d && !isNaN(d.getHours())) {
+          const hour = d.getHours()
+          hours[hour].count += 1
+          hours[hour].revenue += Number(r.total)
+        }
       }
     }
 
@@ -161,7 +164,41 @@ export class LocalReportService {
     return result
   }
 
+  public async productSales(from: string, to: string) {
+    const sql = `
+      SELECT 
+        bi.menu_item_id,
+        bi.item_name as name,
+        COALESCE(c.name, 'General') as category,
+        COALESCE(m.price, ROUND(SUM(bi.line_total) / NULLIF(SUM(bi.quantity), 0), 2)) as price,
+        SUM(bi.quantity) as quantity,
+        SUM(bi.line_total) as revenue,
+        COUNT(DISTINCT bi.bill_id) as orders_count
+      FROM bill_items bi
+      JOIN bills b ON b.id = bi.bill_id
+      LEFT JOIN menu_items m ON m.id = bi.menu_item_id
+      LEFT JOIN categories c ON c.id = m.category_id
+      WHERE b.status = 'completed' AND b.bill_date >= ? AND b.bill_date <= ?
+      GROUP BY bi.menu_item_id, bi.item_name, c.name, m.price
+      ORDER BY quantity DESC;
+    `
+    const rows = await db.query(sql, [from, to])
+    return rows.map((r: any) => ({
+      menu_item_id: r.menu_item_id,
+      name: r.name,
+      category: r.category || 'General',
+      price: Number(r.price) || 0,
+      quantity: Number(r.quantity),
+      revenue: Math.round(Number(r.revenue) * 100) / 100,
+      orders_count: Number(r.orders_count) || 1,
+    }))
+  }
+
   public async foodSales(from: string, to: string) {
+    return this.productSales(from, to)
+  }
+
+  public async oldFoodSales(from: string, to: string) {
     return this.topSelling(from, to, 500)
   }
 

@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { db } from '../db/database'
 import { localSaleService } from '../services/localSaleService'
 import { localResourceService } from '../services/localResourceService'
+import { localReportService } from '../services/localReportService'
+import { todayISO } from '../lib/utils'
 
 describe('Offline POS Sales & Inventory Integrity', () => {
   beforeEach(async () => {
@@ -108,4 +110,34 @@ describe('Offline POS Sales & Inventory Integrity', () => {
     expect(restoreTx.length).toBe(1)
     expect(Number(restoreTx[0].quantity)).toBe(3)
   })
-})
+  it('accurately aggregates product sales, quantities, and revenue for today sales reporting', async () => {
+    const today = todayISO()
+    const friedRice = (await db.query('SELECT id, name, price FROM menu_items WHERE name = "Chicken Fried Rice";'))[0]
+    const roti = (await db.query('SELECT id, name, price FROM menu_items WHERE name = "Egg Roti";'))[0]
+
+    // Complete sale with fried rice and roti
+    await localSaleService.completeSale({
+      items: [
+        { menu_item_id: friedRice.id, quantity: 2 },
+        { menu_item_id: roti.id, quantity: 4 },
+      ],
+      payment_type: 'cash',
+      bill_date: today,
+    })
+
+    const report = await localReportService.productSales(today, today)
+    expect(report.length).toBeGreaterThanOrEqual(2)
+
+    const soldRice = report.find((r) => r.name === 'Chicken Fried Rice')
+    const soldRoti = report.find((r) => r.name === 'Egg Roti')
+
+    expect(soldRice).toBeDefined()
+    expect(soldRice!.quantity).toBeGreaterThanOrEqual(2)
+    expect(soldRice!.revenue).toBe(soldRice!.quantity * Number(friedRice.price))
+    expect(soldRice!.category).toBeTruthy()
+
+    expect(soldRoti).toBeDefined()
+    expect(soldRoti!.quantity).toBeGreaterThanOrEqual(4)
+    expect(soldRoti!.revenue).toBe(soldRoti!.quantity * Number(roti.price))
+  })
+});

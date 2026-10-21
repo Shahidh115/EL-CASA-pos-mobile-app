@@ -1,14 +1,15 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Settings as SettingsIcon, Save, Download, Upload, RotateCcw, ShieldCheck, Database } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, unwrap } from '@/lib/api'
 import { useSettings } from '@/hooks/useData'
 import { localBackupService } from '@/services/localBackupService'
+import { db } from '@/db/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { LoadingBlock } from '@/components/shared'
+import { LoadingBlock, AppUpdateCard } from '@/components/shared'
 import { PrinterSettingsCard } from '@/components/hardware/PrinterSettingsCard'
 
 export default function SettingsPage() {
@@ -103,7 +104,20 @@ export default function SettingsPage() {
     reader.readAsDataURL(file)
   }
 
-  if (isLoading) return <LoadingBlock label="Loading settings…" />
+  // Clear All Data handler
+  const handleClearData = async () => {
+    if (confirm('WARNING: This will permanently delete all local database records (bills, menu items, categories, resources, etc.). Are you sure?')) {
+      try {
+        await db.clearAllData()
+        toast.success('All local database records cleared successfully')
+        queryClient.invalidateQueries()
+      } catch (e: any) {
+        toast.error('Failed to clear data: ' + e.message)
+      }
+    }
+  }
+
+  if (isLoading) return <LoadingBlock label="Loading settingsâ€¦" />
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -193,6 +207,9 @@ export default function SettingsPage() {
       {/* Hardware Printer Settings */}
       <PrinterSettingsCard />
 
+      {/* In-App Auto-Updater */}
+      <AppUpdateCard />
+
       {/* Local SQLite Database & Backup/Restore Card */}
       <Card>
         <CardHeader>
@@ -223,6 +240,16 @@ export default function SettingsPage() {
                 <Upload className="size-4" /> Restore Backup (.JSON)
               </span>
             </label>
+          </div>
+
+          <div className="pt-4 border-t border-destructive/20 mt-4">
+            <h3 className="text-xs font-bold text-destructive uppercase tracking-wider mb-2">Danger Zone</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Clear all operational data, bills, menu items, and inventory records from the local SQLite database.
+            </p>
+            <Button type="button" variant="destructive" onClick={handleClearData} className="gap-2">
+              <RotateCcw className="size-4" /> Clear All Database Data
+            </Button>
           </div>
         </CardContent>
       </Card>

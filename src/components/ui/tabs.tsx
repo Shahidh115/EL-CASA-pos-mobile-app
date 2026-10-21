@@ -38,3 +38,9 @@ export function TabsTrigger({ value, children, className }: { value: string; chi
     </button>
   )
 }
+
+export function TabsContent({ value, children, className }: { value: string; children: React.ReactNode; className?: string }) {
+  const { value: selected } = React.useContext(TabsContext)
+  if (selected !== value) return null
+  return <div className={className}>{children}</div>
+}
