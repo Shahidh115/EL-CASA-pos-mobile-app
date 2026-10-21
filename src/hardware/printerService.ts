@@ -1,6 +1,7 @@
 ﻿import { EscPosEncoder } from './escpos'
 import type { Bill, PrinterConfig, SettingsData } from '@/types'
 import { formatMoney, formatDateTime, formatDate, formatTime, todayISO } from '@/lib/utils'
+import { appUpdateService } from '@/services/appUpdateService'
 import { DEFAULT_EL_CASA_LOGO } from '@/lib/defaultLogo'
 
 export class PrinterService {
@@ -225,7 +226,7 @@ export class PrinterService {
 
   public async printReceipt(bill: Bill, settings: SettingsData, config: PrinterConfig): Promise<{ success: boolean; message: string }> {
     if (config.type === 'system') {
-      window.print()
+      await appUpdateService.nativePrint("Receipt_" + bill.invoice_number)
       return { success: true, message: 'Sent to system print spooler' }
     }
 
@@ -257,7 +258,7 @@ export class PrinterService {
       return { success: true, message: `Sent print job to Network Printer ${config.targetAddress}:9100` }
     }
 
-    window.print()
+    await appUpdateService.nativePrint("Receipt_" + bill.invoice_number)
     return { success: true, message: 'Printed via default printer' }
   }
 
@@ -375,7 +376,7 @@ export class PrinterService {
 
   public async printProductSalesReport(date: string, items: any[], settings: SettingsData, config: PrinterConfig): Promise<{ success: boolean; message: string }> {
     if (config.type === 'system') {
-      window.print()
+      await appUpdateService.nativePrint("SalesReport_" + date)
       return { success: true, message: 'Sent report to system print spooler' }
     }
 

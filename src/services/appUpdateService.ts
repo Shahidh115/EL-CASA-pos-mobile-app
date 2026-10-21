@@ -32,6 +32,7 @@ export interface DownloadProgress {
 
 // Native Plugin definition
 interface ApkInstallerPluginInterface {
+  print(options?: { name?: string }): Promise<{ success: boolean }>
   getAppInfo(): Promise<AppInfo>
   canRequestPackageInstalls(): Promise<{ canInstall: boolean }>
   openInstallPermissionSettings(): Promise<void>
@@ -50,6 +51,22 @@ const PREF_KEY_UPDATE_URL = 'elcasa_update_server_url'
 export const DEFAULT_UPDATE_URL = 'https://raw.githubusercontent.com/Shahidh115/EL-CASA-pos-mobile-app/main/version.json'
 
 class AppUpdateService {
+  /**
+   * Triggers native Android PrintManager spooler dialog for current webview
+   */
+  async nativePrint(jobName = 'EL_CASA_Receipt'): Promise<boolean> {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const res = await ApkInstaller.print({ name: jobName })
+        return res.success
+      } catch (err) {
+        console.warn('Native PrintManager failed, fallback to window.print():', err)
+      }
+    }
+    window.print()
+    return true
+  }
+
   /**
    * Retrieves current application package and version info
    */

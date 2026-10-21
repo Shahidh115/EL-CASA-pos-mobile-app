@@ -9,6 +9,10 @@ import android.os.Build;
 import android.provider.Settings;
 import androidx.core.content.FileProvider;
 
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintManager;
+
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -24,6 +28,34 @@ import java.net.URL;
 
 @CapacitorPlugin(name = "ApkInstaller")
 public class ApkInstallerPlugin extends Plugin {
+
+    @PluginMethod
+    public void print(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            try {
+                PrintManager printManager = (PrintManager) getActivity().getSystemService(Context.PRINT_SERVICE);
+                if (printManager == null) {
+                    call.reject("Android PrintManager service is not available");
+                    return;
+                }
+
+                String jobName = call.getString("name", "EL_CASA_Receipt");
+                PrintDocumentAdapter printAdapter = getBridge().getWebView().createPrintDocumentAdapter(jobName);
+
+                printManager.print(
+                    jobName,
+                    printAdapter,
+                    new PrintAttributes.Builder().build()
+                );
+
+                JSObject ret = new JSObject();
+                ret.put("success", true);
+                call.resolve(ret);
+            } catch (Exception e) {
+                call.reject("Failed to trigger Android Print: " + e.getMessage(), e);
+            }
+        });
+    }
 
     @PluginMethod
     public void getAppInfo(PluginCall call) {

@@ -68,6 +68,13 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
           </div>
           <div className="flex items-center gap-1.5 bg-muted p-1 rounded-lg">
             <button
+              onClick={() => setPrinterConfig({ printLogo: !(printerConfig.printLogo ?? true) })}
+              className={`px-2 py-1 text-xs font-semibold rounded-md transition-colors ${(printerConfig.printLogo ?? true) ? 'bg-[#00447c] text-white shadow-xs font-bold' : 'text-muted-foreground'}`}
+              title="Toggle Shop Logo on Receipt"
+            >
+              Logo: {(printerConfig.printLogo ?? true) ? 'ON' : 'OFF'}
+            </button>
+            <button
               onClick={() => setPrinterConfig({ paperWidth: '58mm' })}
               className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${printerConfig.paperWidth === '58mm' ? 'bg-[#00447c] text-white shadow-xs font-bold' : 'text-muted-foreground'}`}
             >
@@ -83,17 +90,17 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
         </DialogHeader>
 
         {/* Paper Receipt Simulation */}
-        <div className="flex-1 overflow-y-auto p-4 rounded-xl bg-[#dddace] border border-[#c6c3b6] font-mono text-xs text-[#0c0c0c] shadow-sm shadow-inner whitespace-pre leading-relaxed select-text">
+        <div className="flex-1 overflow-y-auto p-4 rounded-xl bg-[#dddace] border border-[#c6c3b6] font-mono text-xs text-[#0c0c0c] shadow-sm shadow-inner leading-relaxed select-text">
           {showLogo && (
-            <div className="flex justify-center pb-3 mb-2 border-b border-[#c6c3b6] border-dashed">
+            <div className="flex justify-center pb-3 mb-3 border-b border-[#c6c3b6] border-dashed">
               <img
                 src={activeLogo}
                 alt="Shop Logo"
-                className="max-h-16 max-w-[180px] object-contain filter grayscale contrast-125"
+                className="max-h-16 max-w-[200px] object-contain filter grayscale contrast-125"
               />
             </div>
           )}
-          {textPreview}
+          <div className="whitespace-pre">{textPreview}</div>
         </div>
 
         {/* Hidden Printable layer for window.print() */}
@@ -108,7 +115,7 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
                   maxWidth: printerConfig.paperWidth === '58mm' ? '140px' : '220px',
                   margin: '0 auto',
                   display: 'block',
-                  filter: 'grayscale(100%) contrast(150%)',
+                  
                 }}
               />
             </div>
