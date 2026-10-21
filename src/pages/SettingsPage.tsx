@@ -104,16 +104,37 @@ export default function SettingsPage() {
     reader.readAsText(file)
   }
 
-  // Handle Logo file select
+  // Handle Logo file select with instant auto-save
   const handleLogoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = (evt) => {
-      setLogoBase64(evt.target?.result as string)
-      toast.info('Logo selected. Click "Save Settings" to persist.')
+    reader.onload = async (evt) => {
+      const base64 = evt.target?.result as string
+      setLogoBase64(base64)
+      try {
+        await unwrap(api.put('/settings', { logo_path: base64 }))
+        queryClient.invalidateQueries({ queryKey: ['settings'] })
+        queryClient.invalidateQueries({ queryKey: ['pos-data'] })
+        toast.success('Shop logo uploaded and saved to database!')
+      } catch (err: any) {
+        toast.error('Failed to save logo: ' + err.message)
+      }
     }
     reader.readAsDataURL(file)
+  }
+
+  // Handle Logo removal with instant auto-save
+  const handleRemoveLogo = async () => {
+    setLogoBase64('')
+    try {
+      await unwrap(api.put('/settings', { logo_path: '' }))
+      queryClient.invalidateQueries({ queryKey: ['settings'] })
+      queryClient.invalidateQueries({ queryKey: ['pos-data'] })
+      toast.info('Custom logo removed. Default logo will be used.')
+    } catch (err: any) {
+      toast.error('Failed to remove logo: ' + err.message)
+    }
   }
 
   // Clear All Data handler
@@ -192,7 +213,7 @@ export default function SettingsPage() {
                   {logoBase64 && (
                     <button
                       type="button"
-                      onClick={() => setLogoBase64('')}
+                      onClick={handleRemoveLogo}
                       className="text-xs text-destructive hover:underline font-medium"
                     >
                       Remove Logo

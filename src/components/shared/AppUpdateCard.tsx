@@ -70,7 +70,7 @@ export function AppUpdateCard() {
   const handleResetUrl = async () => {
     setUpdateUrl(DEFAULT_UPDATE_URL)
     await appUpdateService.setUpdateUrl(DEFAULT_UPDATE_URL)
-    toast.info('Reset update URL to default')
+    toast.success('Reset to official GitHub URL: ' + DEFAULT_UPDATE_URL)
   }
 
   const handleCheckUpdate = async () => {
@@ -161,9 +161,9 @@ export function AppUpdateCard() {
                 <button
                   type="button"
                   onClick={handleResetUrl}
-                  className="text-[10px] text-primary hover:underline"
+                  className="text-xs text-primary font-bold hover:underline bg-primary/15 px-2 py-0.5 rounded border border-primary/30"
                 >
-                  Reset Default
+                  Set Official GitHub Default URL
                 </button>
               </label>
               <div className="flex gap-2">

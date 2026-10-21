@@ -6,6 +6,7 @@ import { useSettings } from '@/hooks/useData'
 import { useHardwareStore } from '@/stores/useHardwareStore'
 import { printerService } from '@/hardware/printerService'
 import { formatMoney, formatDateTime } from '@/lib/utils'
+import { DEFAULT_EL_CASA_LOGO } from '@/lib/defaultLogo'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
@@ -26,7 +27,8 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
 
   const currency = settings?.currency || 'Rs.'
   const textPreview = printerService.formatReceiptText(bill, settings || ({} as any), printerConfig.paperWidth)
-  const showLogo = (printerConfig.printLogo ?? true) && Boolean(settings?.logo_path && settings.logo_path.trim().length > 0)
+  const activeLogo = (settings?.logo_path && settings.logo_path.trim().length > 0) ? settings.logo_path : DEFAULT_EL_CASA_LOGO
+  const showLogo = (printerConfig.printLogo ?? true) && Boolean(activeLogo)
 
   const handlePrint = async () => {
     setPrinting(true)
@@ -85,7 +87,7 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
           {showLogo && (
             <div className="flex justify-center pb-3 mb-2 border-b border-[#c6c3b6] border-dashed">
               <img
-                src={settings!.logo_path!}
+                src={activeLogo}
                 alt="Shop Logo"
                 className="max-h-16 max-w-[180px] object-contain filter grayscale contrast-125"
               />
@@ -99,7 +101,7 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
           {showLogo && (
             <div style={{ textAlign: 'center', marginBottom: '8px' }}>
               <img
-                src={settings!.logo_path!}
+                src={activeLogo}
                 alt="Shop Logo"
                 style={{
                   maxHeight: '65px',

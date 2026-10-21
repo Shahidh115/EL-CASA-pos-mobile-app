@@ -75,7 +75,11 @@ class AppUpdateService {
   async getUpdateUrl(): Promise<string> {
     try {
       const { value } = await Preferences.get({ key: PREF_KEY_UPDATE_URL })
-      return value && value.trim().length > 0 ? value.trim() : DEFAULT_UPDATE_URL
+      if (!value || value.includes('elcasa-roms-android') || value.trim().length === 0) {
+        await this.setUpdateUrl(DEFAULT_UPDATE_URL)
+        return DEFAULT_UPDATE_URL
+      }
+      return value.trim()
     } catch {
       return DEFAULT_UPDATE_URL
     }

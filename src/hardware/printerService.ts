@@ -1,6 +1,7 @@
 ﻿import { EscPosEncoder } from './escpos'
 import type { Bill, PrinterConfig, SettingsData } from '@/types'
 import { formatMoney, formatDateTime, formatDate, formatTime, todayISO } from '@/lib/utils'
+import { DEFAULT_EL_CASA_LOGO } from '@/lib/defaultLogo'
 
 export class PrinterService {
   public formatReceiptText(bill: Bill, settings: SettingsData, paperWidth: '58mm' | '80mm' = '80mm'): string {
@@ -151,11 +152,12 @@ export class PrinterService {
 
     encoder.align('center')
 
-    // Print Shop Logo if enabled and available
-    if ((config.printLogo ?? true) && settings.logo_path && settings.logo_path.trim().length > 0) {
+    // Print Shop Logo if enabled and available (custom logo or official default)
+    const logoToPrint = (settings.logo_path && settings.logo_path.trim().length > 0) ? settings.logo_path : DEFAULT_EL_CASA_LOGO
+    if ((config.printLogo ?? true) && logoToPrint) {
       try {
         const maxWidth = config.paperWidth === '58mm' ? 384 : 480
-        const raster = await this.imageToEscPosRaster(settings.logo_path, maxWidth)
+        const raster = await this.imageToEscPosRaster(logoToPrint, maxWidth)
         if (raster) {
           encoder.rasterImage(raster.width, raster.height, raster.data).lineFeed(1)
         }
@@ -315,11 +317,12 @@ export class PrinterService {
 
     encoder.align('center')
 
-    // Print Shop Logo if enabled and available
-    if ((config.printLogo ?? true) && settings.logo_path && settings.logo_path.trim().length > 0) {
+    // Print Shop Logo if enabled and available (custom logo or official default)
+    const logoToPrint = (settings.logo_path && settings.logo_path.trim().length > 0) ? settings.logo_path : DEFAULT_EL_CASA_LOGO
+    if ((config.printLogo ?? true) && logoToPrint) {
       try {
         const maxWidth = config.paperWidth === '58mm' ? 384 : 480
-        const raster = await this.imageToEscPosRaster(settings.logo_path, maxWidth)
+        const raster = await this.imageToEscPosRaster(logoToPrint, maxWidth)
         if (raster) {
           encoder.rasterImage(raster.width, raster.height, raster.data).lineFeed(1)
         }
