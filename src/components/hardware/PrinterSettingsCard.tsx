@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { Printer, CheckCircle, Wifi, Bluetooth, Monitor } from 'lucide-react'
 import { toast } from 'sonner'
 import { useHardwareStore } from '@/stores/useHardwareStore'
@@ -110,6 +110,15 @@ export function PrinterSettingsCard() {
           <div>
             <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Automations</label>
             <div className="space-y-1.5 text-xs">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={printerConfig.printLogo ?? true}
+                  onChange={(e) => setPrinterConfig({ printLogo: e.target.checked })}
+                  className="rounded border"
+                />
+                Print Shop Logo on Receipts
+              </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"

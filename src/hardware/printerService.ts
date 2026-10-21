@@ -1,4 +1,4 @@
-import { EscPosEncoder } from './escpos'
+﻿import { EscPosEncoder } from './escpos'
 import type { Bill, PrinterConfig, SettingsData } from '@/types'
 import { formatMoney, formatDateTime, formatDate, formatTime, todayISO } from '@/lib/utils'
 
@@ -69,12 +69,101 @@ export class PrinterService {
     return lines.join('\n')
   }
 
-  public encodeReceiptEscPos(bill: Bill, settings: SettingsData, config: PrinterConfig): Uint8Array {
+  /**
+   * Converts an image source (data URL or base64) to a monochrome 1-bit ESC/POS raster bitmap.
+   */
+  public async imageToEscPosRaster(
+    imgSrc: string,
+    maxWidth = 384
+  ): Promise<{ width: number; height: number; data: number[] } | null> {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return null
+    return new Promise((resolve) => {
+      try {
+        const img = new Image()
+        img.crossOrigin = 'Anonymous'
+        img.onload = () => {
+          try {
+            let width = img.width
+            let height = img.height
+
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width)
+              width = maxWidth
+            }
+
+            const widthBytes = Math.ceil(width / 8)
+            const adjustedWidth = widthBytes * 8
+
+            const canvas = document.createElement('canvas')
+            canvas.width = adjustedWidth
+            canvas.height = height
+            const ctx = canvas.getContext('2d')
+            if (!ctx) {
+              resolve(null)
+              return
+            }
+
+            ctx.fillStyle = '#ffffff'
+            ctx.fillRect(0, 0, adjustedWidth, height)
+            const offsetX = Math.floor((adjustedWidth - width) / 2)
+            ctx.drawImage(img, offsetX, 0, width, height)
+
+            const imgData = ctx.getImageData(0, 0, adjustedWidth, height)
+            const pixels = imgData.data
+            const raster: number[] = []
+
+            for (let y = 0; y < height; y++) {
+              for (let b = 0; b < widthBytes; b++) {
+                let byte = 0
+                for (let bit = 0; bit < 8; bit++) {
+                  const x = b * 8 + bit
+                  const idx = (y * adjustedWidth + x) * 4
+                  const r = pixels[idx]
+                  const g = pixels[idx + 1]
+                  const bVal = pixels[idx + 2]
+                  const a = pixels[idx + 3]
+                  const lum = a < 128 ? 255 : 0.299 * r + 0.587 * g + 0.114 * bVal
+                  if (lum < 160) {
+                    byte |= 1 << (7 - bit)
+                  }
+                }
+                raster.push(byte)
+              }
+            }
+
+            resolve({ width: adjustedWidth, height, data: raster })
+          } catch {
+            resolve(null)
+          }
+        }
+        img.onerror = () => resolve(null)
+        img.src = imgSrc
+      } catch {
+        resolve(null)
+      }
+    })
+  }
+
+  public async encodeReceiptEscPos(bill: Bill, settings: SettingsData, config: PrinterConfig): Promise<Uint8Array> {
     const cols = config.paperWidth === '58mm' ? 32 : 48
     const encoder = new EscPosEncoder().reset()
     const currency = settings.currency || 'Rs.'
 
     encoder.align('center')
+
+    // Print Shop Logo if enabled and available
+    if ((config.printLogo ?? true) && settings.logo_path && settings.logo_path.trim().length > 0) {
+      try {
+        const maxWidth = config.paperWidth === '58mm' ? 384 : 480
+        const raster = await this.imageToEscPosRaster(settings.logo_path, maxWidth)
+        if (raster) {
+          encoder.rasterImage(raster.width, raster.height, raster.data).lineFeed(1)
+        }
+      } catch (err) {
+        console.warn('Thermal logo rasterization failed:', err)
+      }
+    }
+
     if (settings.restaurant_name) {
       encoder.bold(true).doubleSize(true).line(settings.restaurant_name).doubleSize(false).bold(false)
     }
@@ -150,7 +239,7 @@ export class PrinterService {
         const server = await device.gatt?.connect()
         if (!server) throw new Error('Bluetooth connection failed')
 
-        const bytes = this.encodeReceiptEscPos(bill, settings, config)
+        const bytes = await this.encodeReceiptEscPos(bill, settings, config)
         return { success: true, message: `Printed ${bytes.length} bytes to Bluetooth printer ${device.name || ''}` }
       } catch (err: any) {
         console.warn('Bluetooth print failed, falling back to system print:', err)
@@ -219,12 +308,26 @@ export class PrinterService {
     return lines.join('\n')
   }
 
-  public encodeProductSalesReportEscPos(date: string, items: any[], settings: SettingsData, config: PrinterConfig): Uint8Array {
+  public async encodeProductSalesReportEscPos(date: string, items: any[], settings: SettingsData, config: PrinterConfig): Promise<Uint8Array> {
     const cols = config.paperWidth === '58mm' ? 32 : 48
     const encoder = new EscPosEncoder().reset()
     const currency = settings.currency || 'Rs.'
 
     encoder.align('center')
+
+    // Print Shop Logo if enabled and available
+    if ((config.printLogo ?? true) && settings.logo_path && settings.logo_path.trim().length > 0) {
+      try {
+        const maxWidth = config.paperWidth === '58mm' ? 384 : 480
+        const raster = await this.imageToEscPosRaster(settings.logo_path, maxWidth)
+        if (raster) {
+          encoder.rasterImage(raster.width, raster.height, raster.data).lineFeed(1)
+        }
+      } catch (err) {
+        console.warn('Thermal logo rasterization failed:', err)
+      }
+    }
+
     if (settings.restaurant_name) {
       encoder.bold(true).doubleSize(true).line(settings.restaurant_name).doubleSize(false).bold(false)
     }
@@ -285,7 +388,7 @@ export class PrinterService {
         const server = await device.gatt?.connect()
         if (!server) throw new Error('Bluetooth connection failed')
 
-        const bytes = this.encodeProductSalesReportEscPos(date, items, settings, config)
+        const bytes = await this.encodeProductSalesReportEscPos(date, items, settings, config)
         return { success: true, message: `Printed report (${bytes.length} bytes) to Bluetooth printer ${device.name || ''}` }
       } catch (err: any) {
         console.warn('Bluetooth print failed, falling back to system print:', err)

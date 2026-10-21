@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { Printer, Copy, Check, DollarSign, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Bill } from '@/types'
@@ -26,6 +26,7 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
 
   const currency = settings?.currency || 'Rs.'
   const textPreview = printerService.formatReceiptText(bill, settings || ({} as any), printerConfig.paperWidth)
+  const showLogo = (printerConfig.printLogo ?? true) && Boolean(settings?.logo_path && settings.logo_path.trim().length > 0)
 
   const handlePrint = async () => {
     setPrinting(true)
@@ -81,12 +82,36 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
 
         {/* Paper Receipt Simulation */}
         <div className="flex-1 overflow-y-auto p-4 rounded-xl bg-[#dddace] border border-[#c6c3b6] font-mono text-xs text-[#0c0c0c] shadow-sm shadow-inner whitespace-pre leading-relaxed select-text">
+          {showLogo && (
+            <div className="flex justify-center pb-3 mb-2 border-b border-[#c6c3b6] border-dashed">
+              <img
+                src={settings!.logo_path!}
+                alt="Shop Logo"
+                className="max-h-16 max-w-[180px] object-contain filter grayscale contrast-125"
+              />
+            </div>
+          )}
           {textPreview}
         </div>
 
         {/* Hidden Printable layer for window.print() */}
         <div id="printable-receipt" className="hidden print:block font-mono text-xs">
-          {textPreview}
+          {showLogo && (
+            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+              <img
+                src={settings!.logo_path!}
+                alt="Shop Logo"
+                style={{
+                  maxHeight: '65px',
+                  maxWidth: printerConfig.paperWidth === '58mm' ? '140px' : '220px',
+                  margin: '0 auto',
+                  display: 'block',
+                  filter: 'grayscale(100%) contrast(150%)',
+                }}
+              />
+            </div>
+          )}
+          <pre style={{ margin: 0, fontFamily: 'monospace', whiteSpace: 'pre' }}>{textPreview}</pre>
         </div>
 
         {/* Footer actions */}
@@ -94,7 +119,7 @@ export function ReceiptModal({ bill, open, onClose }: ReceiptModalProps) {
           <div className="flex gap-2">
             <Button onClick={handlePrint} disabled={printing} className="flex-1 gap-2 text-sm font-bold">
               <Printer className="size-4" />
-              {printing ? 'Printing…' : 'Print Receipt'}
+              {printing ? 'Printingâ€¦' : 'Print Receipt'}
             </Button>
             <Button variant="outline" size="icon" onClick={handleDrawerKick} title="Open Cash Drawer">
               <DollarSign className="size-4" />

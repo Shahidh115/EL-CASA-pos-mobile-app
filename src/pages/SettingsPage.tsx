@@ -29,6 +29,20 @@ export default function SettingsPage() {
   // Logo upload
   const [logoBase64, setLogoBase64] = useState<string | null>(null)
 
+  React.useEffect(() => {
+    if (settings) {
+      if (settings.restaurant_name) setName(settings.restaurant_name)
+      if (settings.address) setAddress(settings.address)
+      if (settings.phone) setPhone(settings.phone)
+      if (settings.receipt_header) setHeader(settings.receipt_header)
+      if (settings.receipt_footer) setFooter(settings.receipt_footer)
+      if (settings.currency) setCurrency(settings.currency)
+      if (settings.tax_rate !== undefined) setTaxRate(String(settings.tax_rate))
+      if (settings.invoice_prefix) setPrefix(settings.invoice_prefix)
+      if (settings.logo_path) setLogoBase64(settings.logo_path)
+    }
+  }, [settings])
+
   const saveSettingsMutation = useMutation({
     mutationFn: async () => {
       const payload: any = {
@@ -40,9 +54,7 @@ export default function SettingsPage() {
         currency: currency.trim(),
         tax_rate: parseFloat(taxRate) || 0,
         invoice_prefix: prefix.trim(),
-      }
-      if (logoBase64) {
-        payload.logo_path = logoBase64
+        logo_path: logoBase64 !== null ? logoBase64 : (settings?.logo_path || ''),
       }
       return unwrap(api.put('/settings', payload))
     },
@@ -174,8 +186,37 @@ export default function SettingsPage() {
                 <Input value={prefix} onChange={(e) => setPrefix(e.target.value)} required />
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Restaurant Logo (Image)</label>
+              <div className="sm:col-span-2 p-3 rounded-xl bg-background/50 border border-border space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground block">Shop / Restaurant Logo (Printed on Bills)</label>
+                  {logoBase64 && (
+                    <button
+                      type="button"
+                      onClick={() => setLogoBase64('')}
+                      className="text-xs text-destructive hover:underline font-medium"
+                    >
+                      Remove Logo
+                    </button>
+                  )}
+                </div>
+
+                {logoBase64 ? (
+                  <div className="flex items-center gap-4 p-2 bg-white rounded-lg border border-border/80 w-fit">
+                    <img
+                      src={logoBase64}
+                      alt="Current Shop Logo"
+                      className="max-h-14 max-w-[160px] object-contain"
+                    />
+                    <div className="text-[11px] text-zinc-600 font-medium">
+                      Logo active & will be printed on receipts.
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    No logo currently uploaded. Upload a black & white or transparent PNG/JPEG to print on customer receipts.
+                  </p>
+                )}
+
                 <input
                   type="file"
                   accept="image/*"

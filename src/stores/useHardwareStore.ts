@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import type { PrinterConfig } from '@/types'
 
 interface HardwareState {
@@ -13,7 +13,7 @@ const DEFAULT_CONFIG: PrinterConfig = {
   port: 9100,
   autoCut: true,
   openCashDrawer: false,
-  printLogo: false,
+  printLogo: true,
   copies: 1,
 }
 
@@ -21,7 +21,7 @@ export const useHardwareStore = create<HardwareState>((set) => ({
   printerConfig: (() => {
     try {
       const saved = localStorage.getItem('elcasa_printer_cfg')
-      return saved ? { ...DEFAULT_CONFIG, ...JSON.parse(saved) } : DEFAULT_CONFIG
+      return saved ? { ...DEFAULT_CONFIG, ...JSON.parse(saved), printLogo: JSON.parse(saved).printLogo !== undefined ? JSON.parse(saved).printLogo : true } : DEFAULT_CONFIG
     } catch {
       return DEFAULT_CONFIG
     }

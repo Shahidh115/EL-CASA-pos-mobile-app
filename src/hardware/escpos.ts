@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ESC/POS Command Encoder for 58mm and 80mm Thermal Receipt Printers.
  */
 export class EscPosEncoder {
@@ -110,6 +110,21 @@ export class EscPosEncoder {
     this.text(content)
     // Print QR
     this.buffer.push(0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x51, 0x30)
+    return this
+  }
+
+  public rasterImage(width: number, height: number, data: number[] | Uint8Array): this {
+    const widthBytes = Math.ceil(width / 8)
+    const xL = widthBytes % 256
+    const xH = Math.floor(widthBytes / 256)
+    const yL = height % 256
+    const yH = Math.floor(height / 256)
+
+    // GS v 0 0 xL xH yL yH
+    this.buffer.push(0x1d, 0x76, 0x30, 0x00, xL, xH, yL, yH)
+    for (let i = 0; i < data.length; i++) {
+      this.buffer.push(data[i])
+    }
     return this
   }
 
