@@ -47,7 +47,7 @@ const ApkInstaller = registerPlugin<ApkInstallerPluginInterface>('ApkInstaller')
 
 const PREF_KEY_UPDATE_URL = 'elcasa_update_server_url'
 // Default placeholder update endpoint - can be pointed to raw GitHub, custom server, or local LAN IP
-export const DEFAULT_UPDATE_URL = 'https://raw.githubusercontent.com/shahidh115/elcasa-roms-android/master/version.json'
+export const DEFAULT_UPDATE_URL = 'https://raw.githubusercontent.com/Shahidh115/EL-CASA-pos-mobile-app/main/version.json'
 
 class AppUpdateService {
   /**

@@ -1,9 +1,9 @@
 ﻿{
   "versionName": "1.0.1",
   "versionCode": 2,
-  "apkUrl": "https://github.com/shahidh115/elcasa-roms-android/releases/download/v1.0.1/app-release.apk",
-  "changelog": "• Added Today's Sales breakdown tab\n• Upgraded to Black + Blue Minimalist theme\n• Enhanced receipt printing with accurate local time\n• Seamless in-app APK auto-updater with SQLite protection",
+  "apkUrl": "https://github.com/Shahidh115/EL-CASA-pos-mobile-app/releases/download/v.0.1/app-debug.apk",
+  "changelog": "• Shop logo on receipts (Thermal & System Print)\n• Today's Sales breakdown tab\n• Black + Blue Minimalist UI theme\n• High precision bill print time tracking\n• In-app APK auto-updater",
   "releaseDate": "2026-10-21",
   "forceUpdate": false,
-  "fileSizeMb": 30.0
+  "fileSizeMb": 28.6
 }

@@ -139,29 +139,30 @@ public class ApkInstallerPlugin extends Plugin {
                 }
 
                 URL url = new URL(downloadUrl);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setConnectTimeout(30000);
-                connection.setReadTimeout(60000);
-                connection.setInstanceFollowRedirects(true);
-                connection.setRequestProperty("User-Agent", "ELCASA-ROMS-Android-Updater");
-
-                int responseCode = connection.getResponseCode();
-                // Handle manual redirects if necessary
-                if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || 
-                    responseCode == HttpURLConnection.HTTP_MOVED_TEMP || 
-                    responseCode == 307 || responseCode == 308) {
-                    String newUrl = connection.getHeaderField("Location");
-                    connection.disconnect();
-                    url = new URL(newUrl);
+                int redirectCount = 0;
+                int responseCode;
+                do {
                     connection = (HttpURLConnection) url.openConnection();
                     connection.setConnectTimeout(30000);
                     connection.setReadTimeout(60000);
+                    connection.setInstanceFollowRedirects(true);
                     connection.setRequestProperty("User-Agent", "ELCASA-ROMS-Android-Updater");
                     responseCode = connection.getResponseCode();
-                }
+
+                    if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || 
+                        responseCode == HttpURLConnection.HTTP_MOVED_TEMP || 
+                        responseCode == 307 || responseCode == 308) {
+                        String newUrl = connection.getHeaderField("Location");
+                        connection.disconnect();
+                        url = new URL(newUrl);
+                        redirectCount++;
+                    } else {
+                        break;
+                    }
+                } while (redirectCount < 6);
 
                 if (responseCode != HttpURLConnection.HTTP_OK) {
-                    call.reject("Download server returned HTTP " + responseCode);
+                    call.reject("Download server returned HTTP " + responseCode + " for: " + downloadUrl);
                     return;
                 }
 
